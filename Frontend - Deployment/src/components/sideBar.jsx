@@ -23,6 +23,31 @@ const Sidebar = ({
   const [showPrintModal, setShowPrintModal] = useState(false);
   const sidebarRef = useRef();
 
+  const [pendingUsersCount, setPendingUsersCount] = useState(0);
+  const apiUrl = import.meta.env.VITE_API_BASE_URL;
+
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const response = await fetch(`${apiUrl}/users?status=pending&limit=1&page=1`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        setPendingUsersCount(data.total ?? 0);
+      } catch (error) {
+        console.error("Failed to fetch pending count:", error);
+      }
+    };
+
+    fetchPendingCount();
+  }, []);
+
   const location = useLocation();
 
   useEffect(() => {
@@ -76,7 +101,16 @@ const Sidebar = ({
       },
     ];
   }
-  const adminItems = [{ icon: "bx-group", label: "Users", path: "/users" }];
+
+  const adminItems = [
+    {
+      icon: "bx-group",
+      label: "Users",
+      path: "/users",
+      badge: pendingUsersCount,
+    },
+  ];
+
   const classes = [{ icon: "bx-book-bookmark", label: "Classes" }];
 
   let menuItems = [];
@@ -123,13 +157,18 @@ const Sidebar = ({
                       <Link
                         to={item.path}
                         onClick={handleMenuClick}
-                        className={`flex flex-col items-center p-2 transition-colors ${
+                        className={`relative flex flex-col items-center p-2 transition-colors ${
                           isActive(item.path)
                             ? "text-orange-600"
                             : "text-gray-700 hover:text-gray-800"
                         }`}
                       >
                         <i className={`bx ${item.icon} mb-[5px] text-2xl`}></i>
+                        {item.badge > 0 && (
+                          <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                            {item.badge > 99 ? "99+" : item.badge}
+                          </span>
+                        )}
                         <span className="text-xs">{item.label}</span>
                       </Link>
                     )}
@@ -366,13 +405,16 @@ const Sidebar = ({
                   <Link
                     to={item.path}
                     onClick={handleMenuClick}
-                    className={`flex cursor-pointer items-center gap-3 rounded-md px-[8px] py-[8px] transition-colors hover:bg-gray-100 hover:text-gray-800${
+                    className={`relative flex cursor-pointer items-center gap-3 rounded-md px-[8px] py-[8px] transition-colors hover:bg-gray-100 hover:text-gray-800${
                       isActive(item.path) ? "" : "hover:text-gray-800"
                     }`}
                   >
-                    <i
-                      className={`bx ${item.icon} text-2xl hover:text-gray-800`}
-                    ></i>
+                    <i className={`bx ${item.icon} text-2xl hover:text-gray-800`}></i>
+                    {item.badge > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
                   </Link>
                 )}
               </SideBarToolTip>

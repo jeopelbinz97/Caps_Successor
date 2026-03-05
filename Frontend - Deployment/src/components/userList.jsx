@@ -44,6 +44,7 @@ const UserList = () => {
 
   // State for bulk action loading states
   const [isApprovingMultiple, setIsApprovingMultiple] = useState(false);
+  const [isDisapprovingMultiple, setIsDisapprovingMultiple] = useState(false);
   const [isActivatingMultiple, setIsActivatingMultiple] = useState(false);
   const [isDeactivatingMultiple, setIsDeactivatingMultiple] = useState(false);
 
@@ -338,6 +339,41 @@ const UserList = () => {
     }
   };
 
+  // function to disapprove a single user
+  const handleDisapproveSelectedUsers = async () => {
+    const token = localStorage.getItem("token");
+    setIsDisapprovingMultiple(true);
+
+    if (selectedUsers.length === 0) {
+      showToast("Please select users to disapprove.", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/users/disapprove-multiple`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userIDs: selectedUsers }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to disapprove selected users.");
+      }
+
+      showToast("Users disapproved successfully!", "success");
+      fetchUsers();
+      setSelectedUsers([]);
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to disapprove selected users. Please try again.", "error");
+    } finally {
+      setIsDisapprovingMultiple(false);
+    }
+  };
+
   // Function to activate a single user
   const handleActivateUser = async (userID) => {
     const token = localStorage.getItem("token");
@@ -528,6 +564,9 @@ const UserList = () => {
     switch (action) {
       case "approve":
         handleApproveSelectedUsers();
+        break;
+      case "disapprove":
+        handleDisapproveSelectedUsers();
         break;
       case "activate":
         handleActivateSelectedUsers();
@@ -986,13 +1025,18 @@ const UserList = () => {
                   setTabLoading(true);
                   setStatusFilter("pending");
                 }}
-                className={`rounded-md px-6 py-[8px] ${
+                className={`relative rounded-md px-6 py-[8px] ${
                   statusFilter === "pending"
                     ? "border-color border bg-gray-100 text-gray-700"
                     : "cursor-pointer text-gray-500"
                 }`}
               >
                 Pending
+                {pendingUsersCount > 0 && (
+                  <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {pendingUsersCount > 99 ? "99+" : pendingUsersCount}
+                  </span>
+                )}
               </button>
 
               <button
@@ -1039,16 +1083,23 @@ const UserList = () => {
                     >
                       All
                     </button>
+
                     <button
                       onClick={() => {
                         setTabLoading(true);
                         setStatusFilter("pending");
                         setStatusDropdownOpen(false);
                       }}
-                      className="w-full rounded-sm px-4 py-2 text-left text-black"
+                      className="flex w-full items-center gap-2 rounded-sm px-4 py-2 text-left text-black"
                     >
                       Pending
+                      {pendingUsersCount > 0 && (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                          {pendingUsersCount > 99 ? "99+" : pendingUsersCount}
+                        </span>
+                      )}
                     </button>
+
                     <button
                       onClick={() => {
                         setTabLoading(true);
@@ -1307,6 +1358,20 @@ const UserList = () => {
                   }`}
                 >
                   <span className="block w-full">Approve</span>
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleActionClick("disapprove");
+                  }}
+                  className={`w-[130px] rounded-sm px-4 py-2 text-left text-black transition-colors ${
+                    selectedUsers.length === 0
+                      ? "cursor-not-allowed text-gray-400"
+                      : "hover:bg-gray-200"
+                  }`}
+                >
+                  <span className="block w-full">Disapprove</span>
                 </button>
 
                 <button
@@ -1993,6 +2058,7 @@ const UserList = () => {
         </table>
       </div>
 
+      {isDisapprovingMultiple && <LoadingOverlay show={isDisapprovingMultiple} />}
       {isActivatingMultiple && <LoadingOverlay show={isActivatingMultiple} />}
       {isApprovingMultiple && <LoadingOverlay show={isApprovingMultiple} />}
       {isDeactivatingMultiple && (

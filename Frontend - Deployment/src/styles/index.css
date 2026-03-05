@@ -1,4 +1,15 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+
+html.dark {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html.dark img,
+html.dark video {
+  filter: invert(1) hue-rotate(180deg);
+}
 
 .text-stroke {
   text-shadow:

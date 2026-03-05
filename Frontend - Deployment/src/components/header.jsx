@@ -44,6 +44,20 @@ function clearPersistedAvatarColor(userInfo) {
 
 // Web App Header
 const AdminHeader = ({ title }) => {
+
+  const [darkMode, setDarkMode] = useState(() => {        //Dark mode
+    return localStorage.getItem("darkMode") === "true";
+  });        
+    useEffect(() => {
+      if (darkMode) {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("darkMode", "true");
+      } else {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("darkMode", "false");
+      }
+    }, [darkMode]);
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -549,12 +563,11 @@ const AdminHeader = ({ title }) => {
                 </button>
 
                 <button
-                  onClick={() =>
-                    alert("The dark mode feature is still under development.")
-                  }
+                  onClick={() => setDarkMode(!darkMode)}
                   className="flex w-full cursor-pointer items-center justify-start rounded-sm px-4 py-3 text-left text-[14px] text-black transition duration-200 ease-in-out hover:bg-gray-200"
                 >
-                  <i className="bx bx-moon mr-2 text-[16px]"></i> Dark Mode
+                  <i className={`bx ${darkMode ? "bx-sun" : "bx-moon"} mr-2 text-[16px]`}></i>
+                  {darkMode ? "Light Mode" : "Dark Mode"}
                 </button>
 
                 <button
