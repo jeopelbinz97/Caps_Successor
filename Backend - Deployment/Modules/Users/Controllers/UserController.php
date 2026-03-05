@@ -249,6 +249,33 @@ class UserController extends Controller
         $this->updateUserStatus($user, 'disapproved', false);
         return response()->json(['message' => 'User has been disapproved.', 'user' => $user], 200);
     }
+    /**
+ * Disapprove multiple users (Dean only).
+ */
+public function disapproveMultipleUsers(Request $request)
+{
+    $this->authorizeDeanAccess();
+
+    $userIDs = $request->userIDs;
+
+    if (!$userIDs || !is_array($userIDs)) {
+        return response()->json([
+            'message' => 'Invalid user IDs provided.'
+        ], 400);
+    }
+
+    foreach ($userIDs as $id) {
+        $user = User::find($id);
+
+        if ($user) {
+            $this->updateUserStatus($user, 'disapproved', false);
+        }
+    }
+
+    return response()->json([
+        'message' => 'Users disapproved successfully.'
+    ], 200);
+}
 
     /**
      * Approve multiple users at once (Only Dean).

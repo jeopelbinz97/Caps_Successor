@@ -54,6 +54,7 @@ Route::middleware(['auth:sanctum', TokenExpirationMiddleware::class, 'role:2,3,4
     Route::get('/users', [UserController::class, 'index']);
     Route::patch('/users/{userID}/approve', [UserController::class, 'approveUser']);
     Route::patch('/users/{userID}/disapprove', [UserController::class, 'disapproveUser']);
+    Route::post('/users/disapprove-multiple', [UserController::class, 'disapproveMultipleUsers']);
     Route::post('/users/approve-multiple', [UserController::class, 'approveMultipleUsers']);
     Route::post('/users/activate-multiple', [UserController::class, 'activateMultipleUsers']);
     Route::post('/users/deactivate-multiple', [UserController::class, 'deactivateMultipleUsers']);
