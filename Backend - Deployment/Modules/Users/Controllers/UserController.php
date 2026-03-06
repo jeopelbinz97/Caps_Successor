@@ -4,11 +4,14 @@ namespace Modules\Users\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Modules\Users\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+
+use Modules\Users\Models\User;
+use App\Mail\UserApprovalNotification;
 
 class UserController extends Controller
 {
@@ -172,42 +175,72 @@ class UserController extends Controller
      * - Program Chair (3) can approve Instructor (2) and Student (1)
      * - Faculty (2) can approve Student (1)
      */
-    public function approveUser(Request $request, $userID)
-    {
+
+
+
+
+public function approveUser(Request $request, $userID)
+{
+    try {
+
+        $authUser = Auth::user();
+        $user = User::findOrFail($userID);
+
+        // Permission check
+        if (!in_array($authUser->roleID, [2,3,4,5])) {
+            return response()->json([
+                'message' => 'Unauthorized. You do not have permission to approve users.'
+            ], 403);
+        }
+
+        // Check if pending
+        if (!$this->isUserPending($user)) {
+            return response()->json([
+                'message' => 'User is already registered.'
+            ], 400);
+        }
+
+        // Role hierarchy
+        if (!$this->canApproveUser($authUser, $user)) {
+            return response()->json([
+                'message' => 'You are not authorized to approve users with this role level.'
+            ], 403);
+        }
+
+        // Update status
+        $this->updateUserStatus($user, 'registered', true);
+
+        $user->refresh();
+
+        // Send email
         try {
-            $authUser = Auth::user();
-            $user = User::findOrFail($userID);
 
-            // Validate if user has permission to approve
-            if (!in_array($authUser->roleID, [2, 3, 4, 5])) {
-                return response()->json(['message' => 'Unauthorized. You do not have permission to approve users.'], 403);
-            }
+            Log::info('Sending approval email to: '.$user->email);
 
-            // Check if user is pending
-            if (!$this->isUserPending($user)) {
-                return response()->json(['message' => 'User is already registered.'], 400);
-            }
-
-            // Validate role hierarchy for approval
-            if (!$this->canApproveUser($authUser, $user)) {
-                return response()->json([
-                    'message' => 'You are not authorized to approve users with this role level.'
-                ], 403);
-            }
-
-            $this->updateUserStatus($user, 'registered', true);
-            return response()->json(['message' => 'User approved successfully.', 'user' => $user], 200);
+            Mail::to($user->email)
+                ->send(new UserApprovalNotification($user,'approved'));
 
         } catch (\Exception $e) {
-            Log::error('User approval error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'An error occurred while approving the user.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
 
-    /**
+            Log::error('Approval email failed: '.$e->getMessage());
+
+        }
+
+        return response()->json([
+            'message' => 'User approved successfully.',
+            'user' => $user
+        ], 200);
+
+    } catch (\Exception $e) {
+
+        Log::error('User approval error: '.$e->getMessage());
+
+        return response()->json([
+            'message' => 'An error occurred while approving the user.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}  /**
      * Check if the authenticated user can approve the target user based on role hierarchy
      */
     private function canApproveUser($authUser, $targetUser)
@@ -242,14 +275,45 @@ class UserController extends Controller
      * Disapprove user (Only Dean).
      */
     public function disapproveUser(Request $request, $userID)
-    {
+{
+    try {
+
         $this->authorizeDeanAccess();
+
         $user = User::findOrFail($userID);
 
         $this->updateUserStatus($user, 'disapproved', false);
-        return response()->json(['message' => 'User has been disapproved.', 'user' => $user], 200);
+
+        $user->refresh();
+
+        try {
+
+            Log::info('Sending disapproval email to: '.$user->email);
+
+            Mail::to($user->email)
+                ->send(new UserApprovalNotification($user,'disapproved'));
+
+        } catch (\Exception $e) {
+
+            Log::error('Disapproval email failed: '.$e->getMessage());
+
+        }
+
+        return response()->json([
+            'message' => 'User has been disapproved.',
+            'user' => $user
+        ], 200);
+
+    } catch (\Exception $e) {
+
+        Log::error('Disapprove error: '.$e->getMessage());
+
+        return response()->json([
+            'message' => 'Error disapproving user',
+            'error' => $e->getMessage()
+        ], 500);
     }
-    /**
+} /**
  * Disapprove multiple users (Dean only).
  */
 public function disapproveMultipleUsers(Request $request)
@@ -265,10 +329,26 @@ public function disapproveMultipleUsers(Request $request)
     }
 
     foreach ($userIDs as $id) {
+
         $user = User::find($id);
 
         if ($user) {
-            $this->updateUserStatus($user, 'disapproved', false);
+
+            $this->updateUserStatus($user,'disapproved',false);
+
+            try {
+
+                Log::info('Sending disapproval email to: '.$user->email);
+
+                Mail::to($user->email)
+                    ->send(new UserApprovalNotification($user,'disapproved'));
+
+            } catch (\Exception $e) {
+
+                Log::error('Bulk disapproval email failed: '.$e->getMessage());
+
+            }
+
         }
     }
 
@@ -280,21 +360,44 @@ public function disapproveMultipleUsers(Request $request)
     /**
      * Approve multiple users at once (Only Dean).
      */
-    public function approveMultipleUsers(Request $request)
-    {
-        $this->authorizeDeanAccess();
-        $validated = $this->validateUserIDs($request);
+public function approveMultipleUsers(Request $request)
+{
+    $this->authorizeDeanAccess();
 
-        $statusIds = $this->getStatusIds();
-        $results = $this->processMultipleApprovals($validated['userIDs'], $statusIds);
+    $validated = $this->validateUserIDs($request);
 
-        return response()->json([
-            'message' => 'Bulk approval completed.',
-            'approved_users' => $results['approved'],
-            'skipped_users' => $results['skipped']
-        ], 200);
+    $statusIds = $this->getStatusIds();
+
+    $results = $this->processMultipleApprovals($validated['userIDs'],$statusIds);
+
+    foreach ($validated['userIDs'] as $id) {
+
+        $user = User::find($id);
+
+        if ($user) {
+
+            try {
+
+                Log::info('Sending approval email to: '.$user->email);
+
+                Mail::to($user->email)
+                    ->send(new UserApprovalNotification($user,'approved'));
+
+            } catch (\Exception $e) {
+
+                Log::error('Bulk approval email failed: '.$e->getMessage());
+
+            }
+
+        }
     }
 
+    return response()->json([
+        'message' => 'Bulk approval completed.',
+        'approved_users' => $results['approved'],
+        'skipped_users' => $results['skipped']
+    ], 200);
+}
     /**
      * Update the authenticated user's profile.
      */
@@ -666,28 +769,46 @@ public function disapproveMultipleUsers(Request $request)
         ];
     }
 
-    private function processMultipleApprovals($userIDs, $statusIds)
-    {
-        $approved = [];
-        $skipped = [];
+private function processMultipleApprovals($userIDs, $statusIds)
+{
+    $approved = [];
+    $skipped = [];
 
-        foreach ($userIDs as $userID) {
-            $user = User::find($userID);
-            if (!$user || $user->status_id === $statusIds['disapproved'] || $user->status_id !== $statusIds['pending']) {
-                $skipped[] = $userID;
-                continue;
-            }
+    foreach ($userIDs as $userID) {
+        $user = User::find($userID);
 
-            $user->update([
-                'status_id' => $statusIds['registered'],
-                'isActive' => true
-            ]);
-
-            $approved[] = $user;
+        if (!$user || $user->status_id === $statusIds['disapproved'] || $user->status_id !== $statusIds['pending']) {
+            $skipped[] = $userID;
+            continue;
         }
 
-        return ['approved' => $approved, 'skipped' => $skipped];
+        $user->update([
+            'status_id' => $statusIds['registered'],
+            'isActive' => true
+        ]);
+
+        // SEND EMAIL
+        try {
+
+            Log::info('Sending approval email to: ' . $user->email);
+
+            Mail::to($user->email)
+                ->send(new UserApprovalNotification($user, 'approved'));
+
+        } catch (\Exception $e) {
+
+            Log::error('Bulk approval email failed: ' . $e->getMessage());
+
+        }
+
+        $approved[] = $user;
     }
+
+    return [
+        'approved' => $approved,
+        'skipped' => $skipped
+    ];
+}
 
     private function validateProfileUpdate(Request $request, $user)
     {

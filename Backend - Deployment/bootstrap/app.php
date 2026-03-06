@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
     })
+    ->withMiddleware(function ($middleware) {
+    $middleware->alias([
+        'auth' => \App\Http\Middleware\Authenticate::class,
+    ]);
+})
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
