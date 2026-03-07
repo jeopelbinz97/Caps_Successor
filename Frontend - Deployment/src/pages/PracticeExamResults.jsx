@@ -53,7 +53,7 @@ const PracticeTestResult = () => {
     <div className="open-sans min-h-screen p-1 sm:p-3">
       <div className="mx-auto mt-8 max-w-7xl">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-10">
-          {/* Left Box - Score Details (30%) */}
+          {/* Left Box - Score Details(30%)*/}
 
           <div className="lg:col-span-3">
             <div className="rounded-md bg-white p-5 shadow-md">

@@ -473,7 +473,7 @@ const AdminHeader = ({ title }) => {
         <div className="flex items-center gap-2">
           <span className="text-[14px] text-gray-500">{title}</span>
 
-          {/* Help Button */}
+          {/* Help Button. */}
           <button
             onClick={() => {
               if (title !== "Student") {

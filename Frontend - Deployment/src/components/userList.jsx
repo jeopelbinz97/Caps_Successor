@@ -1950,7 +1950,7 @@ const UserList = () => {
                   } cursor-pointer`}
                   onClick={() => handleCheckboxChange(user.userID)}
                 >
-                  {/* Checkbox Column */}
+                  {/* Checkbox Columns */}
                   <td
                     className="hidden px-2 py-2 text-left sm:table-cell"
                     onClick={(e) => e.stopPropagation()}

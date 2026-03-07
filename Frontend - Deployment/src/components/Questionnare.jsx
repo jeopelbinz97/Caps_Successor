@@ -36,7 +36,7 @@ const Questionnare = ({
             ></i>
           </SideBarToolTip>
         </span>
-        {/* Always show icon on mobile, but without tooltip */}
+        {/* Always show icon on mobile, but without tooltips */}
         <span className="sm:hidden">
           <i
             onClick={() => alert("Under development")}

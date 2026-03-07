@@ -269,7 +269,7 @@ const SideBarDropDown = ({
       }
 
       const sortedSubjects = [...data.subjects].sort((a, b) => {
-        // First sort by program name
+        // First sort by program names
         const programCompare = (a.programName || "").localeCompare(
           b.programName || "",
         );
