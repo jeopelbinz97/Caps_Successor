@@ -376,49 +376,56 @@ const Sidebar = ({
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className={`fixed top-0 left-0 z-55 h-[100vh] border-r border-gray-300 bg-white px-2 py-3 text-gray-700 transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 z-55 h-[100vh] border-r border-gray-300 bg-white px-2 py-3 text-gray-700 transition-all duration-300 ease-in-out hover:w-[200px] group ${
           isExpanded ? "w-[55.5px]" : "w-[55.5px]"
         }`}
       >
         {/* Logo & CAPS text */}
-        <div className="flex cursor-pointer gap-4 rounded-md px-1 py-[4px] hover:bg-gray-100">
+        <div className="flex items-center gap-2 rounded-md px-1 py-[4px]">
           <img
             key={role_id}
             src={collegeLogo}
             alt="College Logo"
-            className="size-[32px]"
+            className="size-[32px] shrink-0"
           />
+          <span className="overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:opacity-100 text-[13px] font-bold text-gray-700">
+            CAPS - JRMSU
+          </span>
         </div>
 
         {/* Sidebar menu items */}
         <ul className="mt-3 mb-3 space-y-[5px]">
           {menuItems.map((item, index) => (
             <li key={index}>
-              <SideBarToolTip label={item.label} isExpanded={isExpanded}>
-                {item.isButton ? (
-                  <button
-                    onClick={item.onClick}
-                    className={`flex w-full cursor-pointer items-center gap-3 rounded px-[8px] py-[8px] transition-colors hover:bg-gray-100 hover:text-gray-800`}
-                  >
-                    <i className={`bx ${item.icon} text-2xl`}></i>
-                  </button>
-                ) : (
-                  <Link
-                    to={item.path}
-                    onClick={handleMenuClick}
-                    className={`relative flex cursor-pointer items-center gap-3 rounded-md px-[8px] py-[8px] transition-colors hover:bg-gray-100 hover:text-gray-800${
-                      isActive(item.path) ? "" : "hover:text-gray-800"
-                    }`}
-                  >
-                    <i className={`bx ${item.icon} text-2xl hover:text-gray-800`}></i>
-                    {item.badge > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                        {item.badge > 99 ? "99+" : item.badge}
-                      </span>
-                    )}
-                  </Link>
-                )}
-              </SideBarToolTip>
+              {item.isButton ? (
+                <button
+                  onClick={item.onClick}
+                  className={`flex w-full cursor-pointer items-center gap-3 rounded px-[8px] py-[8px] transition-colors hover:bg-gray-100 hover:text-gray-800`}
+                >
+                  <i className={`bx ${item.icon} text-2xl shrink-0`}></i>
+                  <span className="overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:opacity-100 text-[14px] font-medium">
+                    {item.label}
+                  </span>
+                </button>
+              ) : (
+                <Link
+                  to={item.path}
+                  onClick={handleMenuClick}
+                  className={`relative flex cursor-pointer items-center gap-3 rounded-md px-[8px] py-[8px] transition-colors hover:bg-gray-100 hover:text-gray-800${
+                    isActive(item.path) ? "" : "hover:text-gray-800"
+                  }`}
+                >
+                  <i className={`bx ${item.icon} text-2xl shrink-0 hover:text-gray-800`}></i>
+                  <span className="overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:opacity-100 text-[14px] font-medium">
+                    {item.label}
+                  </span>
+                  {item.badge > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
+                </Link>
+              )}
             </li>
           ))}
         </ul>

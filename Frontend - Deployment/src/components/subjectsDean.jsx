@@ -569,16 +569,16 @@ const SideBarDropDown = ({
       >
         {/* Only show tooltip on sm and up */}
         <span className="hidden sm:inline">
-          <SideBarToolTip
-            label="Subjects"
-            isExpanded={isExpanded}
-            className="ml-[15px]"
-          >
+          <div className="flex items-center gap-3">
             <i
-              className={`bx ${item.icon} ${className} text-2xl text-gray-700 hover:text-gray-800 sm:pt-1 sm:text-2xl`}
+              className={`bx ${item.icon} ${className} shrink-0 text-2xl text-gray-700 hover:text-gray-800 sm:pt-1 sm:text-2xl`}
             ></i>
-          </SideBarToolTip>
+            <span className="overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:opacity-100 text-[14px] font-medium text-gray-700">
+              Subjects
+            </span>
+          </div>
         </span>
+
         {/* Always show icon on mobile, but without tooltip */}
         <span className="sm:hidden">
           <i
