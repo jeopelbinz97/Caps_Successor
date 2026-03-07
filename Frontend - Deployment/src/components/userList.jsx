@@ -342,12 +342,19 @@ const UserList = () => {
   // function to disapprove a single user
   const handleDisapproveSelectedUsers = async () => {
     const token = localStorage.getItem("token");
-    setIsDisapprovingMultiple(true);
+    const currentUser = JSON.parse(localStorage.getItem("user"));
 
     if (selectedUsers.length === 0) {
       showToast("Please select users to disapprove.", "error");
       return;
     }
+
+    if (currentUser && selectedUsers.includes(currentUser.userID)) {
+      showToast("You can't disapprove your own account.", "error");
+      return;
+    }
+
+  setIsDisapprovingMultiple(true);
 
     try {
       const response = await fetch(`${apiUrl}/users/disapprove-multiple`, {
@@ -414,8 +421,13 @@ const UserList = () => {
   // Function to deactivate a single user
   const handleDeactivateUser = async (userID) => {
     const token = localStorage.getItem("token");
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+    if (currentUser && userID === currentUser.userID) {
+      showToast("You can't deactivate your own account.", "error");
+      return;
+    }
     setIsDeactivating(true);
-    try {
+  try {
       const response = await fetch(`${apiUrl}/users/${userID}/deactivate`, {
         method: "PATCH",
         headers: {
@@ -520,12 +532,19 @@ const UserList = () => {
   // Function to deactivate multiple selected users
   const handleDeactivateSelectedUsers = async () => {
     const token = localStorage.getItem("token");
-    setIsDeactivatingMultiple(true);
+    const currentUser = JSON.parse(localStorage.getItem("user"));
 
     if (selectedUsers.length === 0) {
       showToast("Please select users to deactivate.", "error");
       return;
     }
+
+    if (currentUser && selectedUsers.includes(currentUser.userID)) {
+      showToast("You can't deactivate your own account.", "error");
+      return;
+    }
+
+    setIsDeactivatingMultiple(true);
 
     try {
       const response = await fetch(`${apiUrl}/users/deactivate-multiple`, {
