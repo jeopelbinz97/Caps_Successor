@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -207,6 +209,8 @@ class AuthController extends Controller
         }
     }
 
+
+ 
     /**
      * Handle user login/authentication.
      *

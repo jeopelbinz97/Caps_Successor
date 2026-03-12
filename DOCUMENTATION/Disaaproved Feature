@@ -1,0 +1,52 @@
+The following files feature were newly introduced in this update cycle is 
+Disapproval of User
+
+Model Helper Methods
+
+User Model (Modules/Users/Models/User.php): Added a new helper method isDisapproved(): bool to easily check if a user's current status is disapproved without querying the database manually.
+Status Model (Modules/Questions/Models/Status.php): Added a similar isDisapproved(): bool method to verify if a status object corresponds to the disapproved state.
+API Routes (routes/api.php)
+Added dedicated endpoints for Dean administrators to reject user applications:
+
+PATCH /users/{userID}/disapprove: Route for disapproving a single user.
+POST /users/disapprove-multiple: Route for bulk disapproving multiple users at once.
+Database Constraints
+Migrations (Modules/Users/Database/Migrations/2025_05_31_213032_add_status_id_to_users_table.php): Officially mapped the status_id of 3 to 'disapproved', integrating it directly into the application's core status list alongside 'pending' and 'registered'.
+Seeders (Modules/Questions/Database/Seeders/StatusSeeder.php): Added 'disapproved' to the list of seeded statuses.
+🔄 2. What Was Changed (Modified Files)
+User Controller (
+
+Modules/Users/Controllers/UserController.php
+)
+Major modifications were made to handle the actual disapproval process and side-effects:
+
+
+disapproveUser(Request $request, $userID)
+:
+
+Authorization Check: Ensured only the Dean (via 
+
+authorizeDeanAccess()
+) can trigger a disapproval.
+User Lookup: Finds the target user by their $userID using User::findOrFail($userID).
+Status Update logic: Uses the newly refactored 
+
+updateUserStatus($user, 'disapproved', false)
+ to simultaneously change the user status_id to the ID for 'disapproved' and update their isActive flag to false.
+State Refresh: Refreshes the user model state with $user->refresh() after the update is processed.
+
+disapproveMultipleUsers(Request $request)
+:
+
+Authorization Check: Similar to single disapproval, strictly limits this action to Deans.
+Data Validation: Ensures the $request->userIDs array exists and is formatted correctly.
+Bulk Processing: Iterates through the provided list of IDs (foreach ($userIDs as $id)), loads the user (User::find($id)), and if valid, updates their status using 
+
+updateUserStatus($user, 'disapproved', false)
+.
+Private Helper Method 
+
+updateUserStatus($user, $status, $isActive)
+:
+
+Was utilized or explicitly defined to look up the correct status_id from the statuses table (e.g., matching 'disapproved') and update both status_id and isActive atomically using $user->update(...).

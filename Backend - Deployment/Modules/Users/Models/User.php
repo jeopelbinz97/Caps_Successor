@@ -40,6 +40,7 @@ class User extends Authenticatable
         'campusID',
         'isActive',
         'status_id',
+        'google_id',
         'programID',
     ];
 

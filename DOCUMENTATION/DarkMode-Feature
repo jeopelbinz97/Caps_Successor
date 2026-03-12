@@ -1,0 +1,134 @@
+Dark Mode Implementation
+Documentation of Changes Made to AdminHeader Component
+
+This document outlines the steps taken to implement dark mode functionality in the frontend React application using Tailwind CSS v4 and a CSS filter approach.
+Project: Frontend - Deployment 
+
+Step 1 — Add Dark Mode State & Effect in AdminHeader.jsx
+File: src/components/AdminHeader.jsx (or wherever AdminHeader is located)
+Added a useState hook to track whether dark mode is active, and a useEffect hook to apply or remove the 'dark' class on the <html> element whenever the state changes.
+    Code Added: 
+    // 1. Add state at the top of the AdminHeader component
+const [darkMode, setDarkMode] = useState(false);
+
+    // 2. Add effect to toggle dark class on <html>
+useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, [darkMode]);
+
+Placement:
+These two blocks are placed at the very top of the AdminHeader component function body, before all other existing useState and useEffect declarations.
+
+Step 2 — Replace the Dark Mode Button
+The original dark mode button showed an alert saying 'The dark mode feature is still under development.' This was replaced with a functional toggle button.
+
+Before (Original Code):
+<button 
+  onClick={() =>
+    alert("The dark mode feature is still under development.")
+  }
+  className="flex w-full cursor-pointer items-center justify-start 
+             rounded-sm px-4 py-3 text-left text-[14px] text-black 
+             transition duration-200 ease-in-out hover:bg-gray-200"
+>
+  <i className="bx bx-moon mr-2 text-[16px]"></i> Dark Mode
+</button>
+After (Updated Code):
+<button
+  onClick={() => setDarkMode(!darkMode)}
+  className="flex w-full cursor-pointer items-center justify-start 
+             rounded-sm px-4 py-3 text-left text-[14px] text-black 
+             transition duration-200 ease-in-out hover:bg-gray-200"
+>
+  <i className={`bx ${darkMode ? "bx-sun" : "bx-moon"} mr-2 text-[16px]`}></i>
+  {darkMode ? "Light Mode" : "Dark Mode"}
+</button>
+
+What Changed:
+• onClick now calls setDarkMode(!darkMode) to toggle the state
+• Icon switches between bx-moon (dark mode off) and bx-sun (dark mode on)
+• Button label switches between 'Dark Mode' and 'Light Mode'
+
+Step 3 — Enable Dark Mode Variant in index.css
+    File: src/index.css
+    Since the project uses Tailwind CSS v4 (via @tailwindcss/vite plugin), there is no tailwind.config.js file. In Tailwind v4, dark mode is configured directly in the CSS file.
+ Code Added (line 2 of index.css):
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));  /* <-- added this line */
+
+Why:
+This tells Tailwind v4 to apply dark: utility classes whenever the .dark class is present on any ancestor element. Since we add .dark to the <html> element, all dark: classes in the app become active.
+
+Step 4 — Apply Dark Mode via CSS Filter (Full UI)
+File: src/index.css
+Instead of manually adding dark: Tailwind classes to every single component (which would take a very long time), a CSS filter trick was used to invert the entire page when dark mode is active. Images and videos are double-inverted so they appear normal.
+Code Added to index.css:
+html.dark {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html.dark img,
+html.dark video {
+  filter: invert(1) hue-rotate(180deg);
+}
+How It Works:
+• invert(1) flips all colors to their opposites (white becomes black, etc.)
+• hue-rotate(180deg) corrects the hue so colors look natural instead of like a photo negative
+• Images and videos get the same filter applied again, which cancels out the inversion and makes them look normal
+Pros:
+✔  Works instantly on the entire UI with zero component changes
+✔  No need to add dark: classes to any component
+✔  Very simple and low-maintenance
+Cons:
+✘  Some colors may look slightly off compared to a purpose-built dark theme
+✘  Not suitable for production apps that need a polished, branded dark mode
+
+Step 5 — Make Dark Mode Persistent with localStorage
+File: src/components/AdminHeader.jsx
+After implementing dark mode, it was noticed that refreshing the page would reset the UI back to light mode. To fix this, localStorage was used to save and restore the user's preference — no backend required.
+Before (non-persistent):
+const [darkMode, setDarkMode] = useState(false);
+
+useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, [darkMode]);
+After (persistent):
+// Reads saved preference from localStorage on first load
+const [darkMode, setDarkMode] = useState(() => {
+  return localStorage.getItem("darkMode") === "true";
+});
+
+// Saves preference to localStorage whenever it changes
+useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add("dark");
+    localStorage.setItem("darkMode", "true");
+  } else {
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("darkMode", "false");
+  }
+}, [darkMode]);
+What Changed:
+• useState now uses a lazy initializer function (() => ...) to read from localStorage on first render
+• localStorage.setItem('darkMode', ...) saves the preference every time the user toggles
+• On page refresh or revisit, the saved value is read and the correct mode is applied instantly
+How localStorage Works Here:
+localStorage is a browser built-in key-value store that persists data even after the page is closed or refreshed. It stores strings, so 'true'/'false' are used and compared with === 'true'.
+
+Summary of All Files Changed
+File	Change	Type
+src/components/AdminHeader.jsx	Added darkMode state + useEffect	Addition
+src/components/AdminHeader.jsx	Replaced dark mode button with toggle	Modification
+src/index.css	Added @variant dark line for Tailwind v4	Addition
+src/index.css	Added CSS filter for full-page dark mode	Addition
+src/components/AdminHeader.jsx	Made dark mode persistent via localStorage	Modification
+
+Note: No changes were needed in App.jsx, vite.config.js, or package.json.
