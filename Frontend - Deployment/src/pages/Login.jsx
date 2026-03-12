@@ -250,7 +250,10 @@ export default function LoginPage() {
                   {/* Google Sign-In Button */}
                   <button
                     type="button"
-                    onClick={() => {/* handle Google login */}}
+                    onClick={() => {
+                      const backendUrl = apiUrl.replace('/api', '');
+                      window.location.href = `${backendUrl}/auth/google`;
+                    }}
                     className="mb-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-[10px] text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:scale-[0.98]"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="size-5">

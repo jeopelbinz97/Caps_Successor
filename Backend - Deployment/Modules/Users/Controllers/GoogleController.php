@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace Modules\Users\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use Laravel\Socialite\Facades\Socialite;
 use Modules\Users\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -36,13 +36,17 @@ class GoogleController extends Controller
                 ]);
             }
 
-            // Log in the user
-            Auth::login($user);
+            // Generate token (using the same logic as your Login method)
+            $tokenResult = $user->createToken('auth_token', ['*'], now()->addHours(3));
+            $plainTextToken = $tokenResult->plainTextToken;
 
-            return redirect('/dashboard'); // or wherever your frontend is
+            // Redirect back to frontend
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost');
+            return redirect($frontendUrl . '/google-callback?token=' . $plainTextToken . '&user=' . urlencode(json_encode($user)));
 
         } catch (\Exception $e) {
-            return redirect('/login')->withErrors(['msg' => 'Google login failed: ' . $e->getMessage()]);
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost');
+            return redirect($frontendUrl . '/login?error=' . urlencode('Google login failed: ' . $e->getMessage()));
         }
     }
 }

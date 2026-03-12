@@ -1,0 +1,75 @@
+Google Sign-In Backend Setup Guide
+==================================
+
+Setting up Google Sign-In in a Laravel backend involves several steps using the Laravel Socialite package. Here is the step-by-step documentation on how it was integrated into this application.
+
+1. Install Laravel Socialite
+-----------------------------
+The Laravel Socialite package handles all the complex OAuth 2.0 communication with Google.
+Command used to install:
+composer require laravel/socialite
+
+
+2. Get Google Credentials
+--------------------------
+In the Google Cloud Console, a project was created and OAuth credentials were generated.
+These credentials were added to the backend `.env` file:
+
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URL=http://localhost:8000/auth/google/callback
+
+Important Note for Docker/React Setup:
+A FRONTEND_URL variable was also added to know where to redirect the user after a successful login:
+FRONTEND_URL=http://localhost
+
+
+3. Configure the Services Array
+--------------------------------
+Laravel needs to know where to find the Google credentials.
+The `config/services.php` file was updated to include the 'google' provider:
+
+'google' => [
+    'client_id' => env('GOOGLE_CLIENT_ID'),
+    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    'redirect' => env('GOOGLE_REDIRECT_URL'),
+],
+
+
+4. Create the GoogleController
+-------------------------------
+A controller (`Modules\Users\Controllers\GoogleController.php`) was created to handle the two critical steps of the OAuth flow:
+1. Redirecting to Google: The `redirectToGoogle` method sends the user to Google's login screen.
+2. Handling the Callback: The `handleGoogleCallback` method receives the user's data from Google after they authenticate.
+
+Core Logic of handleGoogleCallback:
+- Get the user's info safely from Google using `Socialite::driver('google')->stateless()->user();`.
+- Check if a user with this email already exists in the local database (`User::where('email', ...)`).
+- If they don't exist, register them automatically with a default Student role (roleID 1) and random password.
+- Generate an authentication token using Laravel Sanctum (`$user->createToken(...)`).
+- Build the frontend URL using `env('FRONTEND_URL')`.
+- Package up the user data string (`urlencode(json_encode($user))`).
+- Redirect the user back to the React frontend (`/google-callback?token=...&user=...`), securely passing the token and user data via the URL.
+
+
+5. Define the Routes
+---------------------
+The endpoints that trigger the controller methods were created in `routes/web.php` because these are browser redirects (not API calls).
+
+use Modules\Users\Controllers\GoogleController;
+
+// The route the frontend links to (e.g. window.location.href = 'http://localhost:8000/auth/google')
+Route::get('auth/google', [GoogleController::class, 'redirectToGoogle']);
+
+// The route Google sends the user back to (matches your GOOGLE_REDIRECT_URL in .env)
+Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
+
+
+Summary of the Flow
+--------------------
+1. User clicks the "Continue with Google" button on the React frontend and is redirected to `http://localhost:8000/auth/google`.
+2. Laravel Socialite catches this request and redirects the browser to the Google Accounts page.
+3. User selects their Gmail account and grants permission.
+4. Google redirects the user back to Laravel at `http://localhost:8000/auth/google/callback`.
+5. Laravel grabs their email, logs them in (or creates their account in the database), generates a Sanctum API token, and immediately redirects them again to the React frontend (`http://localhost/google-callback?token=...&user=...`), passing the new token securely via the URL.
+6. The frontend extracts the token, saves it to `localStorage`, and navigates the user to their respective dashboard.

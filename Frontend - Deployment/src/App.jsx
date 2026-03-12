@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/protectRoute";
 import TutorialLayout from "./components/TutorialLayout";
 
 import Credits from "./pages/Credits";
+import GoogleCallback from "./pages/GoogleCallback";
 
 import StudentDashboard from "./pages/StudentDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
@@ -41,6 +42,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         <Route path="/team-caps" element={<Credits />} />
+        <Route path="/google-callback" element={<GoogleCallback />} />
 
         <Route path="/help" element={<ProtectedRoute element={<Layout />} />}>
           <Route index element={<TutorialLayout />} />

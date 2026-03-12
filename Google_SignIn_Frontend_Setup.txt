@@ -1,0 +1,107 @@
+Google Sign-In Frontend Setup Guide (React)
+=============================================
+
+Integrating Google Sign-In on the React frontend involves two main parts: sending the user to the backend authentication route, and catching them when they return with an access token.
+
+1. Create the Login Button (Login.jsx)
+---------------------------------------
+On the Login page, a button was created to trigger the Google Sign-In flow. 
+Instead of making an API call (like a normal login fetch), this button changes the browser's URL directly to the backend's Google Auth route.
+
+Code implementation:
+
+const apiUrl = import.meta.env.VITE_API_BASE_URL; // e.g., http://localhost:8000/api
+...
+<button
+  type="button"
+  onClick={() => {
+    // We strip the '/api' part to get the base backend URL
+    const backendUrl = apiUrl.replace('/api', '');
+    // Redirect the whole browser to the Laravel Socialite route
+    window.location.href = `${backendUrl}/auth/google`;
+  }}
+>
+  Continue with Google
+</button>
+
+
+2. Create the Callback Component (GoogleCallback.jsx)
+------------------------------------------------------
+After Google authenticates the user, the backend redirects the browser back to the frontend with the user's data and access token in the URL.
+A dedicated React component (`GoogleCallback.jsx`) was created to catch this redirect.
+
+Its job is to:
+1. Parse the URL to get the `token` and `user` data.
+2. Save them to the browser's `localStorage` so the user remains logged in.
+3. Perform a hard redirect (`window.location.href`) to the correct dashboard based on the user's role.
+
+Core Logic of GoogleCallback.jsx:
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+...
+export default function GoogleCallback() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleGoogleLogin = () => {
+      // 1. Extract the token and user string from the URL query parameters
+      const searchParams = new URLSearchParams(location.search);
+      const token = searchParams.get("token");
+      const userStr = searchParams.get("user");
+
+      if (token && userStr) {
+        // 2. Parse the user data back into a JavaScript object
+        const userObj = JSON.parse(decodeURIComponent(userStr));
+        
+        // 3. Save to localStorage (this makes the user "logged in" across the app)
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(userObj));
+
+        // 4. Role-based redirect
+        // We use window.location.href instead of navigate() to force a full 
+        // page reload. This guarantees that React Contexts and authentication 
+        // guards re-read the newly set localStorage values.
+        const roleId = Number(userObj.roleID);
+        switch (roleId) {
+          case 1:
+            window.location.href = "/student-dashboard";
+            // ... cases for other roles ...
+        }
+      }
+    };
+
+    handleGoogleLogin();
+  }, [location]);
+
+  // Show a loading spinner while the URL is being parsed
+  return <LoadingOverlay />;
+}
+
+
+3. Register the Callback Route (App.jsx)
+-----------------------------------------
+Finally, the React Router configuration in `App.jsx` was updated to tell the app to render the `GoogleCallback` component whenever a user visits the `/google-callback` path.
+
+import GoogleCallback from "./pages/GoogleCallback";
+...
+function App() {
+  return (
+    <Router>
+      <Routes>
+        ...
+        {/* The route that the backend redirects to after successful login */}
+        <Route path="/google-callback" element={<GoogleCallback />} />
+        ...
+      </Routes>
+    </Router>
+  );
+}
+
+
+Summary of the Flow
+--------------------
+1. User clicks the "Continue with Google" button. The frontend redirects them to the backend (`window.location.href = http://localhost:8000/auth/google`).
+2. (Backend handles talking to Google).
+3. The backend redirects the user back to the frontend (`http://localhost/google-callback?token=123&user={...}`).
+4. The `App.jsx` router sees the `/google-callback` URL and renders the `GoogleCallback` component.
+5. `GoogleCallback.jsx` reads the URL, saves the token/user to `localStorage`, and instantly hard-redirects the user to their specific dashboard (`/student-dashboard`).
