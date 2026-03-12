@@ -500,9 +500,14 @@ const AdminHeader = ({ title }) => {
           </button>
 
           {/* Three-dot Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div
+            className="relative"
+            ref={dropdownRef}
+            onMouseEnter={() => setDropdownOpen(true)}
+            onMouseLeave={() => setDropdownOpen(false)}
+          >
             <button
-              className="-mr-3 flex cursor-pointer items-center rounded-full border-2 border-gray-300 bg-white transition hover:border-gray-400 hover:bg-gray-100"
+              className="-mr-3 flex cursor-pointer items-center rounded-full border-2 border-gray-300 bg-white transition duration-10000 hover:border-gray-400 hover:bg-gray-100"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
               {/* Circle with initial */}
@@ -557,14 +562,14 @@ const AdminHeader = ({ title }) => {
                 <div className="mx-1 h-[1px] bg-[rgb(200,200,200)]" />
                 <button
                   onClick={() => setShowProfileModal(true)}
-                  className="mt-1 flex w-full cursor-pointer items-center justify-start rounded-sm px-4 py-3 text-left text-[14px] text-black transition duration-200 ease-in-out hover:bg-gray-200"
+                  className="group flex w-full cursor-pointer items-center gap-2 rounded-sm px-4 py-3 text-left text-[14px] text-black transition-all duration-200 ease-in-out hover:bg-gray-100 hover:translate-x-1"
                 >
                   <i className="bx bx-cog mr-2 text-[16px]"></i> Settings
                 </button>
 
                 <button
                   onClick={() => setDarkMode(!darkMode)}
-                  className="flex w-full cursor-pointer items-center justify-start rounded-sm px-4 py-3 text-left text-[14px] text-black transition duration-200 ease-in-out hover:bg-gray-200"
+                  className="group flex w-full cursor-pointer items-center gap-2 rounded-sm px-4 py-3 text-left text-[14px] text-black transition-all duration-200 ease-in-out hover:bg-gray-100 hover:translate-x-1"
                 >
                   <i className={`bx ${darkMode ? "bx-sun" : "bx-moon"} mr-2 text-[16px]`}></i>
                   {darkMode ? "Light Mode" : "Dark Mode"}

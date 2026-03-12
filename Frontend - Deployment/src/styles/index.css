@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
 
+.row-fade-out {
+  animation: fadeOut 0.4s ease forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(30px); }
+}
+
 
 html.dark {
   filter: invert(1) hue-rotate(180deg);
