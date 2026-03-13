@@ -500,12 +500,7 @@ const AdminHeader = ({ title }) => {
           </button>
 
           {/* Three-dot Dropdown */}
-          <div
-            className="relative"
-            ref={dropdownRef}
-            onMouseEnter={() => setDropdownOpen(true)}
-            onMouseLeave={() => setDropdownOpen(false)}
-          >
+          <div className="relative" ref={dropdownRef}>
             <button
               className="-mr-3 flex cursor-pointer items-center rounded-full border-2 border-gray-300 bg-white transition duration-10000 hover:border-gray-400 hover:bg-gray-100"
               onClick={() => setDropdownOpen(!dropdownOpen)}

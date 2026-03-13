@@ -354,7 +354,14 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="font-inter mt-10 text-center text-gray-500">
+    <div className="font-inter mt-50 text-center text-gray-500">
+      <span className="block text-[35px] text-blue-600 font-bold">
+        Welcome to CAPS!
+      </span>
+      <span className="block text-[20px]">
+        Click the button to start...
+      </span>
+
       {/* Draft
       {ongoingExam && (
         <div className="mb-6">
